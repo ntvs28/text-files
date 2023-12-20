@@ -1,0 +1,41 @@
+#include <stdio.h>
+
+void encryptDecrypt(char str[], int key) {
+    for (int i = 0; i < 100 && str[i] != '\0'; i++) {
+        str[i] = str[i] + key; // or str[i] = str[i] - key; for decryption
+    }
+}
+
+int main() {
+    int choice, key;
+    char str[100];
+
+    printf("\nPlease enter a string:\t");
+    gets(str);
+
+    printf("\nPlease choose following options:\n");
+    printf("1 = Encrypt the string.\n");
+    printf("2 = Decrypt the string.\n");
+    scanf("%d", &choice);
+
+    printf("\nEnter the key: ");
+    scanf("%d", &key);
+
+    // using switch case statements
+    switch (choice) {
+        case 1:
+            encryptDecrypt(str, key);
+            printf("\nEncrypted string: %s\n", str);
+            break;
+
+        case 2:
+            encryptDecrypt(str, -key); // use -key for decryption
+            printf("\nDecrypted string: %s\n", str);
+            break;
+
+        default:
+            printf("\nError\n");
+    }
+
+    return 0;
+}

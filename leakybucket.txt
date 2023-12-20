@@ -1,0 +1,50 @@
+#include<stdio.h>
+int main(){
+    int bucket_size=0,bucket[2000],output,loss=0,input,c=1,ch,n=0,m,i;
+    printf("enter bucket size");
+    scanf("%d",&bucket_size);
+    printf("enter output rate");
+    scanf("%d",&output);
+    while(c==1)
+    {
+        printf("1.input burst data\n2.output data\n3.exit\n");
+        printf("select your choice");
+        scanf("%d",&ch);
+        switch(ch)
+        {
+            case 1:
+            printf("enter burst data");
+            scanf("%d",&input);
+            if(input<=bucket_size-n)
+            {
+                n=n+input;
+            }
+            else{
+                printf("bucket overflow");
+                loss=input-(bucket_size-n);
+                n=n+(bucket_size-n);
+                printf("......\n");
+                printf("data lost is %d\n",loss);
+                printf("......\n");
+            }
+            break;
+            case 2:
+            printf("enter no. of iterations");
+            scanf("%d",&m);
+            for(i=0;i<m;i++){
+                n=n-output;
+            }
+            printf("........\n");
+            printf("remaining data in bucket %d\n",n);
+            printf(".......\n");
+            if(n==0){
+                printf("bucket empty"); 
+            }
+            break;
+            case 3:
+            printf("transmission ended\n");
+            c=0;
+            break;
+            }
+        }
+    }

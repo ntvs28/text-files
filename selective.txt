@@ -1,0 +1,28 @@
+#include<stdio.h>
+int main()
+{
+int windowsize,sent=0,ack,i,framesize;
+printf("enter window size\n");
+scanf("%d",&windowsize);
+printf("enter frame size\n");
+scanf("%d",&framesize);
+while(1)
+{
+for( i = 0; i < windowsize && sent<framesize; i++)
+{
+printf("Frame %d has been transmitted.\n",sent);
+sent++;
+if(sent == framesize)
+break;
+}
+printf("\nPlease enter the last Acknowledgement received.\n");
+scanf("%d",&ack);
+
+if(ack == framesize)
+break;
+else if(sent != ack);
+printf("frame %d has been retransmitted\n",ack);
+
+}
+return 0;
+}
