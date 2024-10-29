@@ -1,0 +1,841 @@
+			      Security Programs
+
+
+1.a)  Aim:  Program to send a message (Ex: Mid exams are from next Monday) to your friend.
+
+Program:
+
+MyClient.java
+
+import java.io.*;
+import java.net.*;
+
+public class MyClient {
+    public static void main(String[] args) {
+        try {
+            Socket s = new Socket("localhost", 9999);
+            DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+            dout.writeUTF("midexams are from next monday");
+            dout.flush();
+            dout.close();
+            s.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+Output:
+
+c:/>java MyClient
+
+
+
+
+
+
+
+
+
+
+
+
+
+MyServer.java
+
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+public class MyServer2 {
+    public static void main(String[] args) {
+        try {
+            ServerSocket ss = new ServerSocket(9999);
+            Socket s = ss.accept(); // establishes connection
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+            String str = dis.readUTF();
+            System.out.println("message= " + str);
+            ss.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+Output:
+
+c:/>java MyServer
+
+message: Mid exams are from next monday
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1.b)  Aim:  Program for the above one to show that the message has been  modified (attack). (ex: “Mid exams are postponed”).
+
+Program:
+
+MyClient1.java 
+
+import java.io.*;
+import java.net.*;
+public class MyClient1 
+{
+public static void main(String[] args) 
+ { 
+try
+  {	
+   Socket s=new Socket("localhost",9999);
+DataOutputStream dout=new DataOutputStream(s.getOutputStream());
+dout.writeUTF("midexams are from next monday");
+dout.flush();
+dout.close();
+s.close();
+  }
+catch(Exception e)	
+  {
+System.out.println(e);
+  }
+ }
+}Output:
+
+c:/>java MyClient1
+
+
+
+
+
+
+
+
+MyServer1.java
+import java.io.*;
+import java.net.*;
+import java.util.*;
+public class MyServer1 
+{
+public static void main(String[] args)
+ {
+try
+  {
+ServerSocket ss=new ServerSocket(9999);
+   Socket s=ss.accept();//establishes connection 
+DataInputStream dis=new DataInputStream(s.getInputStream());
+   String str=(String)dis.readUTF();
+str="mid exams are postponed";
+System.out.println("message= "+str);
+ss.close();
+  }
+catch(Exception e)
+  {
+System.out.println(e);
+  }
+ }
+}
+Output:
+
+c:/>java MyServer1
+Mid exams are postponed
+
+
+
+
+
+
+
+
+
+
+2.a) Aim:  Program so that sender and receiver are sharing the same key (Symmetric Encryption).
+Cryptography.java
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.DESKeySpec;
+import java.util.Base64;
+
+public class Cryptography {
+
+    private static final String CRYPTOGRAPHY_ALGO_DES = "DES";
+    private static Cipher cipher = null;
+    private static DESKeySpec keySpec = null;
+    private static SecretKeyFactory keyFactory = null;
+
+    public static String encrypt(String inputString, String commonKey)
+            throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        String encryptedValue = "";
+        SecretKey key = getSecretKey(commonKey);
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] inputBytes = inputString.getBytes();
+        byte[] outputBytes = cipher.doFinal(inputBytes);
+        encryptedValue = Base64.getEncoder().encodeToString(outputBytes);
+        return encryptedValue;
+    }
+
+    public static String decrypt(String encryptedString, String commonKey)
+            throws InvalidKeyException, IllegalBlockSizeException, BadPaddingException, IOException {
+        String decryptedValue = "";
+        encryptedString = encryptedString.replace(' ', '+');
+        SecretKey key = getSecretKey(commonKey);
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        byte[] recoveredBytes = Base64.getDecoder().decode(encryptedString);
+        decryptedValue = new String(cipher.doFinal(recoveredBytes));
+        return decryptedValue;
+    }
+
+    private static SecretKey getSecretKey(String secretPassword) {
+        SecretKey key = null;
+        try {
+            cipher = Cipher.getInstance(CRYPTOGRAPHY_ALGO_DES);
+            keySpec = new DESKeySpec(secretPassword.getBytes("UTF8"));
+            keyFactory = SecretKeyFactory.getInstance(CRYPTOGRAPHY_ALGO_DES);
+            key = keyFactory.generateSecret(keySpec);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error in generating the secret Key");
+        }
+        return key;
+    }
+
+    public static void main(String[] args) {
+        String input = "Hello, World!";
+        String commonKey = "secretKey"; // Replace with your own secret key
+
+        try {
+            String encryptedValue = encrypt(input, commonKey);
+            System.out.println("Encrypted: " + encryptedValue);
+
+            String decryptedValue = decrypt(encryptedValue, commonKey);
+            System.out.println("Decrypted: " + decryptedValue);
+        } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | IOException e) {
+            e.printStackTrace();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2.b) Aim :  Program so that sender sends the message and receiver decrypts the message with the above key. 
+MyClientDes.java
+
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.InputStreamReader;
+import java.net.Socket;
+
+public class MyClientDes {
+    public static final String DES_ENCRYPTION_KEY = "testString";
+
+    public static void main(String[] args) {
+        try {
+            Socket s = new Socket("localhost", 6666);
+            DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+
+            BufferedReader br1 = new BufferedReader(new InputStreamReader(System.in));
+            System.out.print("Enter message to send: ");
+            String input = br1.readLine();
+            System.out.println("Client Side");
+            System.out.println("Message from Client: " + input);
+
+            String encrypted = Cryptography.encrypt(input, DES_ENCRYPTION_KEY);
+            System.out.println("Encrypted Message: " + encrypted);
+
+            dout.writeUTF(encrypted);
+            dout.flush();
+            dout.close();
+            s.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+Output:
+
+c:/>java MyClientDes
+Client side
+Message from client:Hello	
+Encrypted Message:jRAxrmeNze8=
+
+
+
+
+
+
+
+MyServerDes.java
+
+import java.io.DataInputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+public class MyServerDes {
+    public static final String DES_ENCRYPTION_KEY = "testString";
+
+    public static void main(String[] args) {
+        try {
+            ServerSocket ss = new ServerSocket(6666);
+            System.out.println("Server waiting for client...");
+
+            Socket s = ss.accept(); // establishes connection
+
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+            String str = (String) dis.readUTF();
+            System.out.println("\n\nServer Side");
+            System.out.println("Message from Client:  " + str);
+
+            String decrypted = Cryptography.decrypt(str, DES_ENCRYPTION_KEY);
+            System.out.println("Decrypted Message:  " + decrypted);
+
+            ss.close();
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
+Output:
+
+c:/>java MyServerDes
+
+Serverside
+
+Message from client: jRAxrmeNze8=
+
+Decrypted Message: Hello
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) Aim:   Program which shows the public-key cryptography technique. Note: generate two keys, public and private and encrypt with one key and decrypt with the other key.
+
+Program:
+
+import java.io.*;
+
+public class RSA1 {
+    public static void main(String args[]) throws IOException {
+        String a = new String("0ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        int n, i, j, s = 0, n2, k1, p, q, d, m1, e1, l5, z, s1, l3, l4;
+        int[] p2 = new int[30];
+        int[] c = new int[30];
+        double l2, l1, l6, k2, m;
+        float e, l;
+        String p1;
+
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        System.out.println("Enter two prime numbers p and q:");
+        p = Integer.parseInt(br.readLine());
+        q = Integer.parseInt(br.readLine());
+
+        do {
+            n = p * q;
+            if (n < 26) {
+                System.out.println("\n n value is not large enough.\nplease select p, q value such that p*q is greater than 26");
+                p = Integer.parseInt(br.readLine());
+                q = Integer.parseInt(br.readLine());
+            }
+        } while (n < 26);
+
+        z = ((p - 1) * (q - 1));
+        System.out.println("Enter the value of d:");
+        d = Integer.parseInt(br.readLine());
+
+        for (j = 1; j < z; j++) {
+            if ((j * d) % z == 1)
+                break;
+        }
+        e = j;
+        System.out.println("n=" + n + ", z=" + z + ", e=" + e);
+
+        System.out.println("ENCRYPTION-CIPHERTEXT");
+        System.out.println("Enter the plain text:");
+        p1 = br.readLine();
+        System.out.print("Cipher: ");
+        for (i = 0; i < p1.length(); i++) {
+            for (j = 1; j < a.length(); j++) {
+                if (a.charAt(j) == p1.charAt(i)) {
+                    s = j;
+                    break;
+                } else
+                    continue;
+            }
+            e1 = (int) e;
+            l1 = Math.pow((double) s, (double) e1);
+            k2 = l1 % (double) n;
+            c[i] = (int) k2;
+            System.out.print(c[i] + " ");
+        }
+        System.out.println();
+
+        System.out.print("Decipher: ");
+        for (i = 0; i < p1.length(); i++) {
+            l2 = (Math.pow((double) c[i], (double) d));
+            m = l2 % (double) n;
+            m1 = (int) m;
+            System.out.print(a.charAt(m1));
+        }
+    }
+}
+Output:
+
+c:/>java RSA1
+
+Enter 2 prime numbers p and q
+3
+11
+
+Enter the value of d:7
+N=33 z=20 e=3.0
+
+ENCRYPTION-CIPHERTEXT
+
+Enter the Plain text
+ABC
+
+Cipher:1 8 27
+ABC
+
+
+
+
+
+4.a) Aim:  Program to compute the sum of integers from 1 to 10.
+
+Program:
+
+import java.io.*;
+
+public class Sum {
+    public static int add(int k, int n) {
+        int s = 0;
+        for (int i = k; i <= n; i++) {
+            s = s + i;
+        }
+        return s;
+    }
+
+    public static void main(String args[]) {
+        int sum;
+        sum = add(1, 10);
+        System.out.println("Sum is: " + sum);
+    }
+}
+Output:
+
+Sum is : 55
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.b) Aim:  Program to show that the above program can be sabotaged so that during execution it computes a different sum from 3 to 20. (Program security)
+
+Program:
+
+MyClient3.java
+
+import java.io.*;
+import java.net.*;
+
+public class MyClient3{
+    public static void main(String[] args) {
+        try {
+            Socket s = new Socket("localhost", 9999);
+            DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+
+            int a = 1, b = 10;
+            dout.writeInt(a);
+            dout.writeInt(b);
+            dout.flush(); 
+            dout.close();
+            s.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+Output:
+
+c:/>java MyClient
+
+
+
+
+
+
+
+
+
+
+
+
+MyServer3.java
+
+import java.io.*;
+import java.net.*;
+
+public class MyServer3{
+    public static void main(String[] args) {
+        try {
+            ServerSocket ss = new ServerSocket(9999);
+            System.out.println("Server waiting for client...");
+
+            Socket s = ss.accept(); // establishes connection
+            DataInputStream dis = new DataInputStream(s.getInputStream());
+
+            int c = dis.readInt();
+            int d = dis.readInt();
+            int sum = 0;
+            for (int i = c + 2; i <= d + 10; i++) {
+                sum = sum + i;
+            }
+            System.out.println("Sum = " + sum);
+
+            ss.close();
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+    }
+}
+Output:
+
+c:/>java MyServer
+
+Sum=207
+
+5) write a program so that two mutually suspicious parties can authenticate each other in java
+
+
+import java.security.*;
+
+public class MutualAuthentication {
+
+    public static void main(String[] args) throws Exception {
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(2048); // Adjust key size as needed
+        KeyPair aliceKeyPair = keyPairGenerator.generateKeyPair();
+        KeyPair bobKeyPair = keyPairGenerator.generateKeyPair();
+
+        String messageFromAlice = "Hello Bob! This is Alice.";
+        byte[] signatureFromAlice = signMessage(messageFromAlice, aliceKeyPair.getPrivate());
+
+        String messageFromBob = "Hello Alice! This is Bob.";
+        byte[] signatureFromBob = signMessage(messageFromBob, bobKeyPair.getPrivate());
+
+        
+        verifyAndPrintMessage(messageFromAlice, signatureFromAlice, aliceKeyPair.getPublic());
+        verifyAndPrintMessage(messageFromBob, signatureFromBob, bobKeyPair.getPublic());
+    }
+
+    
+    private static byte[] signMessage(String message, PrivateKey privateKey) throws Exception {
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+        signature.update(message.getBytes());
+        return signature.sign();
+    }
+
+    
+    private static void verifyAndPrintMessage(String message, byte[] signatureBytes, PublicKey publicKey) throws Exception {
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(publicKey);
+        signature.update(message.getBytes());
+        if (signature.verify(signatureBytes)) {
+            System.out.println("Message verified: " + message);
+        } else {
+            System.out.println("Message verification failed: " + message);
+        }
+    }
+}
+
+
+
+
+
+
+
+
+6) Aim: Program to display the student’s database (roll number, name, and attendance), but note the students confidential information (such as marks). (Database security)
+
+Program:
+
+import java.sql.*;
+importjava.lang.*;
+import java.io.*;
+public class dbsecurity
+{
+public static void main(String args[])
+ {
+try
+  {
+Class.forName("sun.jdbc.odbc.JdbcOdbcDriver");
+   Connection con=DriverManager.getConnection("jdbc:odbc:ss","scott","tiger");
+   Statement stmt=con.createStatement();
+ResultSetrs=stmt.executeQuery("select * from Student1");
+ResultSetMetaDatarm=rs.getMetaData();
+int c=rm.getColumnCount();
+for(inti=1;i<c;i++)
+System.out.print(rm.getColumnName(i)+"\t");
+System.out.println();
+while(rs.next())
+   {
+for(inti=1;i<c;i++)
+System.out.print(rs.getString(i)+"\t");
+System.out.println();
+   }
+   String pwd="secure";
+System.out.println("enter Password:");
+BufferedReaderbr=new BufferedReader(new InputStreamReader(System.in));
+   String p=br.readLine();
+if(pwd.equals(p))
+   {
+rs=stmt.executeQuery("select * from Student1");
+rm=rs.getMetaData();
+    c=rm.getColumnCount();
+for(inti=1;i<=c;i++)
+System.out.print(rm.getColumnName(i)+"\t");
+System.out.println();
+while(rs.next())
+    {
+for(inti=1;i<=c;i++)
+System.out.print(rs.getString(i)+"\t");
+System.out.println();
+    }
+   }
+else
+System.out.println("Wrong Password");
+con.close();
+  }
+catch(Exception e)
+  {
+System.out.println(e);
+  }
+ }
+}
+
+Output:
+
+c:/>java dbsecurity
+
+ID	NAME	ATTND
+1	abc	75
+2	xyz	60
+3	pqr	50
+
+Enter Password:
+secure
+ID	NAME	ATTND	MARKS
+1	abc	75	90
+2	xyz	60	80
+3	pqr	50	90
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+7) Aim: Program to demonstrate man-in-middle attack.  Same as 1b
+
+
+Program:
+
+
+MyClient.java
+
+import java.io.*;
+import java.net.*;
+public class MyClient
+{
+public static void main(String[] args) 
+ {
+try
+  {	
+   Socket s=new Socket("localhost",9999);
+DataOutputStreamdout = new DataOutputStream(s.getOutputStream());
+dout.writeUTF("midexams are from next Monday");
+dout.flush();
+dout.close();
+s.close();
+  }
+catch(Exception e)	
+  { 
+System.out.println(e);
+  } 
+ }
+}
+
+
+Output:
+
+c:/>java MyClient
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+MyServer.java
+
+import java.io.*;
+import java.net.*;
+importjava.util.*;
+public class MyServer1 
+{
+public static void main(String[] args)
+ {
+try
+  {
+ServerSocketss = new ServerSocket(9999);
+   Socket s = ss.accept();//establishes connection 
+DataInputStream dis = new DataInputStream(s.getInputStream());
+   String str = (String)dis.readUTF();
+Str ="mid exams are postponed";
+System.out.println("message= "+str);
+ss.close();
+  }
+catch(Exception e)
+  {
+System.out.println(e);
+  }
+ }
+}
+
+Output:
+
+c:/>java MyServer1
+Mid exams are postponed
+
+
+
+
+
+
+
+
+
+
+
+8) Write a program to demonstrate the denial of service to the authorised user in the lab (Administrative Security)
+
+
+
+import java.net.*;
+import java.io.*;
+
+public class DoSSimulation {
+
+    public static void main(String[] args) {
+        String targetHost = "127.0.0.1"; // Replace with the IP address or hostname of the target
+        int targetPort = 80; // Replace with the port number of the service you want to attack
+        int numConnections = 100; // Number of simultaneous connections to establish
+
+        System.out.println("Initiating Denial of Service attack simulation...");
+
+        for (int i = 0; i < numConnections; i++) {
+            try {
+                Socket socket = new Socket(targetHost, targetPort);
+                System.out.println("Connection #" + (i + 1) + " established to " + targetHost + ":" + targetPort);
+            } catch (IOException e) {
+                System.out.println("Failed to connect: " + e.getMessage());
+            }
+        }
+
+        System.out.println("Denial of Service attack simulation complete.");
+    }
+}
