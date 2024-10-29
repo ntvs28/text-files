@@ -1,0 +1,446 @@
+      Security Programs
+
+
+1.a)  Aim:  Program to send a message (Ex: Mid exams are from next Monday) to your friend.
+
+Program:
+
+MyServer.py
+
+import socket
+
+class MyServer:
+    def main(self):
+        try:
+            ss = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            ss.bind(('localhost', 9999))
+            ss.listen(1)
+            print("Server is listening on port 9999...")
+
+            s, addr = ss.accept()  
+            print(f"Connection from {addr} has been established.")
+
+            str_data = s.recv(1024).decode('utf-8')
+            print("message= " + str_data)
+
+            s.close()
+            ss.close()
+        except Exception as e:
+            print(e)
+
+if _name_ == "_main_":
+    server = MyServer()
+    server.main()
+
+Output:
+python server.py
+Server is listening for incoming connections...
+Connected to client at: ('127.0.0.1', 55436)
+Message sent, server closed connection.
+
+
+client.py
+
+import socket
+
+def main():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("localhost", 9999))
+        message = "midexams are from next monday"
+        s.sendall(message.encode('utf-8'))
+        s.close()
+    except Exception as e:
+        print(e)
+
+if _name_ == "_main_":
+    main()
+
+Output:
+
+c:/>java MyServer
+
+message: Mid exams are from next monday
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1.b)  Aim:  Program for the above one to show that the message has been  modified (attack). (ex: “Mid exams are postponed”).
+
+Program:
+
+MyServer.py 
+
+import socket
+def main():
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind(('localhost', 9999))
+        server_socket.listen(1)
+        print("Server is waiting for a connection...")
+        client_socket, addr = server_socket.accept()
+        print(f"Connection established with {addr}")
+        data = client_socket.recv(1024).decode('utf-8')
+        message = "mid exams are postponed"
+        print(f"message= {message}")
+        client_socket.close()
+        server_socket.close()
+    except Exception as e:
+        print(e)
+if _name_ == "_main_":
+    main()
+
+MyClient.py
+import socket
+
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 9999))
+    
+    message = "midexams are from next monday"
+    s.sendall(message.encode('utf-8'))
+    
+    s.close()
+except Exception as e:
+    print(e)
+
+Output:
+
+
+
+
+
+
+
+
+
+
+
+2.a) Aim:  Program so that sender and receiver are sharing the same key (Symmetric Encryption).
+
+pip install pycryptodome
+Cryptography.py
+
+from Crypto.Cipher import DES
+from Crypto.Util.Padding import pad, unpad
+import base64
+
+def encrypt(input_string, key):
+    cipher = DES.new(key.encode('utf-8')[:8], DES.MODE_ECB)
+    encrypted_bytes = cipher.encrypt(pad(input_string.encode('utf-8'), DES.block_size))
+    return base64.b64encode(encrypted_bytes).decode('utf-8')
+
+def decrypt(encrypted_string, key):
+    cipher = DES.new(key.encode('utf-8')[:8], DES.MODE_ECB)
+    decrypted_bytes = unpad(cipher.decrypt(base64.b64decode(encrypted_string)), DES.block_size)
+    return decrypted_bytes.decode('utf-8')
+
+def main():
+    input_str = "Hello, World!"
+    key = "secretKey"  # 8-byte key required for DES
+
+    encrypted_value = encrypt(input_str, key)
+    print("Encrypted:", encrypted_value)
+
+    decrypted_value = decrypt(encrypted_value, key)
+    print("Decrypted:", decrypted_value)
+
+if __name__ == "__main__":
+    main()
+
+
+2.b) Aim :  Program so that sender sends the message and receiver decrypts the message with the above key. 
+
+
+pip install cryptography
+server.py
+import socket
+from cryptography.fernet import Fernet
+
+DES_ENCRYPTION_KEY = b'YOUR_GENERATED_FERNET_KEY_HERE'  
+def main():
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as ss:
+            ss.bind(('localhost', 6666))
+            ss.listen()
+            print("Server waiting for client...")
+
+            conn, addr = ss.accept()  
+            with conn:
+                data = conn.recv(1024)
+                str_received = data.decode('utf-8')
+                print("\n\nServer Side")
+                print(f"Message from Client: {str_received}")
+
+                decrypted = decrypt(str_received, DES_ENCRYPTION_KEY)
+                print(f"Decrypted Message: {decrypted}")
+
+    except Exception as e:
+        print(str(e))
+
+def decrypt(encrypted_message, key):
+    f = Fernet(key)
+    decrypted_message = f.decrypt(encrypted_message.encode())
+    return decrypted_message.decode()
+
+if __name__ == "__main__":
+    main()
+Output:
+
+
+
+
+client.py
+import socket
+from cryptography.fernet import Fernet
+import base64
+
+DES_ENCRYPTION_KEY = "testString"
+
+def main():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', 6666))
+
+        input_message = input("Enter message to send: ")
+        print("Client Side")
+        print("Message from Client:", input_message)
+
+        encrypted = encrypt(input_message, DES_ENCRYPTION_KEY)
+        print("Encrypted Message:", encrypted)
+
+        s.sendall(encrypted.encode())
+        s.close()
+    except Exception as e:
+        print(e)
+
+def encrypt(message, key):
+    fernet_key = base64.urlsafe_b64encode(key.encode().ljust(32)[:32])
+    fernet = Fernet(fernet_key)
+    return fernet.encrypt(message.encode()).decode()
+
+if __name__ == "__main__":
+    main()
+Output:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+3) Aim:   Program which shows the public-key cryptography technique. Note: generate two keys, public and private and encrypt with one key and decrypt with the other key.
+
+Program:
+
+import math
+
+def main():
+    alphabet = "0ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    print("Enter two prime numbers p and q:")
+    
+    p = int(input())
+    q = int(input())
+
+    while True:
+        n = p * q
+        if n >= 26:
+            break
+        print("\nn value is not large enough.\nPlease select p, q values such that p*q is greater than 26")
+        p = int(input())
+        q = int(input())
+
+    z = (p - 1) * (q - 1)
+    print("Enter the value of d:")
+    d = int(input())
+
+    # Find e such that (e * d) % z == 1
+    e = None  # Initialize e
+    for j in range(1, z):
+        if (j * d) % z == 1:
+            e = j
+            break
+
+    if e is None:
+        print("No valid public key e found. Please check the value of d.")
+        return
+
+    print(f"n={n}, z={z}, e={e}")
+
+    print("ENCRYPTION-CIPHERTEXT")
+    print("Enter the plain text:")
+    plaintext = input().upper()
+    print("Cipher: ", end="")
+    ciphertext = []
+    for char in plaintext:
+        if char in alphabet:
+            s = alphabet.index(char)
+            k2 = pow(s, e, n)  
+            ciphertext.append(k2)
+            print(k2, end=" ")
+
+    print()
+
+    print("Decipher: ", end="")
+    for k2 in ciphertext:
+        m = pow(k2, d, n)  
+        print(alphabet[m], end="")
+    
+    print()
+
+if __name__ == "__main__":
+    main()
+Output:
+
+c:/>java RSA1
+
+Enter 2 prime numbers p and q
+3
+11
+
+Enter the value of d:7
+N=33 z=20 e=3.0
+
+ENCRYPTION-CIPHERTEXT
+
+Enter the Plain text
+ABC
+
+Cipher:1 8 27
+ABC
+
+
+
+
+
+4.a) Aim:  Program to compute the sum of integers from 1 to 10.
+
+Program:
+
+sum = 0
+for i in range(1, 11):
+    sum += i
+print("The sum of numbers from 1 to 10 is:", sum)
+Output:
+
+Sum is : 55
+
+
+
+
+
+4.b) Aim:  Program to show that the above program can be sabotaged so that during execution it computes a different sum from 3 to 20. (Program security)
+
+Program:
+
+server.py
+
+import socket
+import struct
+
+def main():
+    try:
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.bind(('localhost', 9999))
+        server_socket.listen(1)
+        print("Server waiting for client...")
+
+        client_socket, _ = server_socket.accept()  # establishes connection
+        
+        # Receive two integers from the client
+        c = struct.unpack('!i', client_socket.recv(4))[0]
+        d = struct.unpack('!i', client_socket.recv(4))[0]
+        
+        # Calculate sum
+        sum_result = sum(range(c + 2, d + 11))
+        print(f"Sum = {sum_result}")
+
+        server_socket.close()
+    except Exception as e:
+        print(e)
+
+if __name__ == "__main__":
+    main()
+Output:
+
+
+
+client.py
+import socket
+import struct
+
+try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('localhost', 9999))
+
+    a, b = 1, 10
+    data = struct.pack('>ii', a, b)  # Pack two integers in big-endian format
+    s.sendall(data)
+
+    s.close()
+except Exception as e:
+    print(e)
+Output:
+
+
+
+Sum=207
+
+
+
+
+
+
+
+7) Aim: Program to demonstrate man-in-middle attack.  Same as 1b
+
+
+
+
+
+8) Write a program to demonstrate the denial of service to the authorised user in the lab (Administrative Security)
+
+
+import socket
+
+def main():
+    target_host = "127.0.0.1"  # Replace with the IP address or hostname of the target
+    target_port = 80  # Replace with the port number of the service you want to attack
+    num_connections = 100  # Number of simultaneous connections to establish
+
+    print("Initiating Denial of Service attack simulation...")
+
+    for i in range(num_connections):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((target_host, target_port))
+            print(f"Connection #{i + 1} established to {target_host}:{target_port}")
+        except Exception as e:
+            print(f"Failed to connect: {e}")
+
+    print("Denial of Service attack simulation complete.")
+
+if _name_ == "_main_":
+    main()
