@@ -1,0 +1,71 @@
+import socket
+
+def caesar_decrypt(ciphertext, shift):
+    decrypted = ""
+    for char in ciphertext:
+        if char.isalpha():
+            start = 65 if char.isupper() else 97
+            decrypted += chr((ord(char) - start - shift) % 26 + start)
+        else:
+            decrypted += char
+    return decrypted
+
+# Create and set up the server socket
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind(('localhost', 12345))
+server_socket.listen(1)
+print("Server is listening on port 12345...")
+
+client_socket, addr = server_socket.accept()
+print(f"Connection established with {addr}")
+
+# Receive the encrypted message and shift value from the client
+encrypted_message = client_socket.recv(1024).decode()
+shift = int(client_socket.recv(1024).decode())
+
+# Decrypt the message
+decrypted_message = caesar_decrypt(encrypted_message, shift)
+print(f"Received encrypted message: {encrypted_message}")
+print(f"Decrypted message: {decrypted_message}")
+
+# Send the decrypted message back to the client
+client_socket.send(decrypted_message.encode())
+
+client_socket.close()
+server_socket.close()
+
+
+CLIENT:
+import socket
+
+def caesar_encrypt(plaintext, shift):
+    encrypted = ""
+    for char in plaintext:
+        if char.isalpha():
+            start = 65 if char.isupper() else 97
+            encrypted += chr((ord(char) - start + shift) % 26 + start)
+        else:
+            encrypted += char
+    return encrypted
+
+# Input message and shift value
+message = input("Enter message to encrypt: ")
+shift = int(input("Enter shift value: "))
+
+# Encrypt the message
+encrypted_message = caesar_encrypt(message, shift)
+print(f"Encrypted message: {encrypted_message}")
+
+# Create and connect the client socket
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('localhost', 12345))
+
+# Send the encrypted message and shift value to the server
+client_socket.send(encrypted_message.encode())
+client_socket.send(str(shift).encode())
+
+# Receive and print the decrypted message from the server
+decrypted_message = client_socket.recv(1024).decode()
+print(f"Decrypted message from server: {decrypted_message}")
+
+client_socket.close()
