@@ -1,0 +1,63 @@
+from PIL import Image
+import numpy as np
+
+# Function to decode the message from the image
+def Decode(src):
+    img = Image.open(src, 'r')
+    array = np.array(list(img.getdata()))
+    
+    if img.mode == 'RGB':
+        n = 3
+    elif img.mode == 'RGBA':
+        n = 4
+    else:
+        print("Unsupported image mode!")
+        return
+
+    total_pixels = array.size // n
+    hidden_bits = ""
+
+    # Extract the MSB (Most Significant Bit) of each channel
+    for p in range(total_pixels):
+        for q in range(0, 3):  # Iterate over RGB channels
+            hidden_bits += bin(array[p][q])[2:].zfill(8)[0]  # MSB is the first bit
+
+    # Split hidden bits into 8-bit segments
+    hidden_bits = [hidden_bits[i:i + 8] for i in range(0, len(hidden_bits), 8)]
+
+    # Convert binary data to characters
+    message = ""
+    for i in range(len(hidden_bits)):
+        char = chr(int(hidden_bits[i], 2))
+        message += char
+        if message[-5:] == "$t3g0":  # Check for delimiter
+            break
+
+    # Output the hidden message
+    if "$t3g0" in message:
+        print("Hidden Message:", message[:-5])  # Exclude the delimiter
+    else:
+        print("No Hidden Message Found")
+
+# Menu-driven interface
+def Stego():
+    print("-- Welcome to $t3g0 Steganography --")
+    print("1: Encode")
+    print("2: Decode")
+    func = input("Choose an option: ")
+
+    if func == '1':
+        src = input("Enter Source Image Path: ")
+        message = input("Enter Message to Hide: ")
+        dest = input("Enter Destination Image Path: ")
+        print("Encoding...")
+        Encode(src, message, dest)  # Assume Encode function is implemented
+    elif func == '2':
+        src = input("Enter Source Image Path: ")
+        print("Decoding...")
+        Decode(src)
+    else:
+        print("Invalid option! Please choose 1 or 2.")
+
+# Run the program
+Stego()
